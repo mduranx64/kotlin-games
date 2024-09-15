@@ -1,5 +1,6 @@
 package com.mduranx64.kotlingames
 
+import android.util.Log
 import androidx.compose.runtime.*
 import kotlin.math.abs
 
@@ -9,12 +10,13 @@ class Board {
     var blackCapture by mutableStateOf(listOf<Piece>())
         private set
     var currentTurn by mutableStateOf(PieceColor.WHITE)
+        private set
     private var inPassingPiece: Piece? = null
 
-    var selectedPosition by mutableStateOf<Position?>(null)
-        private set
-    var promotedPosition by mutableStateOf<Position?>(null)
-        private set
+    private var selectedPosition by mutableStateOf<Position?>(null)
+
+    private var promotedPosition by mutableStateOf<Position?>(null)
+
     var isBlackKingCaptured by mutableStateOf(false)
         private set
     var isWhiteKingCaptured by mutableStateOf(false)
@@ -38,7 +40,7 @@ class Board {
                 Piece(PieceType.KING, PieceColor.WHITE), Piece(PieceType.BISHOP, PieceColor.WHITE), Piece(PieceType.KNIGHT, PieceColor.WHITE), Piece(PieceType.ROOK, PieceColor.WHITE))
         )
     )
-    private set
+        private set
 
     fun isSelected(position: Position): Boolean {
         return selectedPosition == position
@@ -71,11 +73,8 @@ class Board {
                     getPieceAt(from)?.type == PieceType.ROOK &&
                     pieceAtPosition.type == PieceType.ROOK
                 ) {
-                    if (movePiece(from, newPosition)) {
-                        selectedPosition = null
-                    } else {
-                        selectedPosition = newPosition
-                    }
+                    selectedPosition = if (movePiece(from, newPosition)) null else newPosition
+
                 } else if (getPieceAt(from)?.color == pieceAtPosition.color) {
                     selectedPosition = newPosition
                 } else {
@@ -104,11 +103,11 @@ class Board {
         currentTurn = if (color == PieceColor.WHITE) PieceColor.BLACK else PieceColor.WHITE
     }
 
-    fun getPieceAt(position: Position): Piece? {
+    private fun getPieceAt(position: Position): Piece? {
         return pieces[position.x][position.y]
     }
 
-    fun movePiece(from: Position, to: Position): Boolean {
+    private fun movePiece(from: Position, to: Position): Boolean {
         val piece = getPieceAt(from) ?: return false
         if (piece.color != currentTurn) return false
 
@@ -193,7 +192,21 @@ class Board {
         }
 
         if (isMoved) {
+
             changeTurn(piece.color)
+            if (BuildConfig.DEBUG) {
+                // Loop through the rows of pieces
+                for (row in pieces) {
+                    var rowText = " "
+                    for (singlePiece in row) {  // Rename 'piece' to 'singlePiece' to avoid shadowing
+                        val pieceSymbol = singlePiece?.symbol ?: "ˣ"  // Now 'pieceSymbol' is used instead of shadowing 'piece'
+                        rowText += "$pieceSymbol "
+                    }
+                    Log.i("CHESS", rowText)
+                }
+                Log.i("CHESS","-----------------")
+
+            }
         }
 
         return isMoved

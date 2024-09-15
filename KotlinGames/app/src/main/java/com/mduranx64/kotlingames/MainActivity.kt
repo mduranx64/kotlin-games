@@ -3,7 +3,6 @@ package com.mduranx64.kotlingames
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,11 +22,15 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -53,8 +56,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mduranx64.kotlingames.ui.theme.KotlinGamesTheme
 
+enum class BoardTheme {
+    Black,
+    Brown
+}
+
 class MainActivity : ComponentActivity() {
-    private val board = Board()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -68,12 +75,16 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyGame() {
+    var showMenuAlert by remember { mutableStateOf(false) }
+    var currentTheme by remember { mutableStateOf(BoardTheme.Black) }
+    val board by remember { mutableStateOf(Board()) }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Material 3 App",
+                        text = "Chess",
                         fontSize = 20.sp,
                         color = Color.White
                     )
@@ -81,7 +92,7 @@ fun MyGame() {
                 navigationIcon = {
                     // Left button (Menu or Back button)
                     IconButton(onClick = {
-                        // Handle left button click action here
+                        // handle
                     }) {
                         Icon(Icons.Default.Close, contentDescription = "Back", tint = Color.White)
                     }
@@ -89,7 +100,7 @@ fun MyGame() {
                 actions = {
                     // Right button (Settings or any action)
                     IconButton(onClick = {
-                        // Handle right button click action here
+                        showMenuAlert = true
                     }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
                     }
@@ -101,7 +112,8 @@ fun MyGame() {
         },
         content = { paddingValues ->
             ChessBoardView(
-                board = remember { Board() }, // Pass a Board object here
+                board = remember { board }, // Pass a Board object here
+                boardTheme = currentTheme,
                 modifier = Modifier
                     .padding(paddingValues) // Respect the Scaffold padding for the content
                     .fillMaxSize()
@@ -109,26 +121,38 @@ fun MyGame() {
             )
         }
     )
+
+    if (showMenuAlert) {
+        MenuAlert(
+            onDismiss = { showMenuAlert = false },
+            theme = currentTheme,
+            onThemeChange = { newTheme -> currentTheme = newTheme }
+        )
+    }
 }
 
 @Composable
-fun ChessBoardView(board: Board, modifier: Modifier) {
+fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
     val squares = 8
     val gridSize = LocalConfiguration.current.screenWidthDp.coerceAtMost(LocalConfiguration.current.screenHeightDp).dp
     val squareSize = gridSize / squares
 
-    var showCustomAlert by remember { mutableStateOf(false) }
-    var showMenuAlert by remember { mutableStateOf(false) }
-    var showWinAlert by remember { mutableStateOf(false) }
-    var showPawnAlert by remember { mutableStateOf(false) }
-    
+    var showCustomAlert: Boolean by remember { mutableStateOf(false) }
+    var showWinAlert: Boolean by remember { mutableStateOf(false) }
+    var showPawnAlert: Boolean by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
+        val captureSize = if (board.blackCapture.count() > 8 || board.whiteCapture.count() > 8)  squareSize * 2 else squareSize
         // Top Captured pieces
-        LazyVerticalGrid(columns = GridCells.Fixed(squares)) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(squares),
+            modifier = Modifier.size(width = gridSize, height = captureSize)
+        ) {
             itemsIndexed(board.whiteCapture) { _, piece ->
                 Image(
                     painter = painterResource(piece.pieceImage),
@@ -136,10 +160,27 @@ fun ChessBoardView(board: Board, modifier: Modifier) {
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .size(squareSize)
-                        .padding(2.dp)
                 )
             }
         }
+
+        Column(
+            modifier = Modifier.alpha(if (board.currentTurn == PieceColor.BLACK) 1f else 0f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = "Game Controller",
+                tint = Color.Black
+            )
+            Text(
+                text = "Black move",
+                fontSize = 14.sp,
+                color = Color.Black
+            )
+        }
+
         // Board and Pieces
         Box (modifier = Modifier.size(width = gridSize, height = gridSize)){
             // Board
@@ -148,10 +189,14 @@ fun ChessBoardView(board: Board, modifier: Modifier) {
                     val row = index % squares
                     val column = index / squares
                     val isLight = (row + column) % 2 == 0
-                    val imageResId = if (isLight) R.drawable.square_gray_light else R.drawable.square_gray_dark
+
+                    val finalTheme = when (boardTheme) {
+                        BoardTheme.Black -> if (isLight) R.drawable.square_gray_light else R.drawable.square_gray_dark
+                        BoardTheme.Brown -> if (isLight) R.drawable.square_brown_light else R.drawable.square_brown_dark
+                    }
 
                     Image(
-                        painter = painterResource(id = imageResId),
+                        painter = painterResource(id = finalTheme),
                         contentDescription = null,
                         modifier = Modifier.size(squareSize), // Adjust the size of each square
                         contentScale = ContentScale.Fit // Ensures the image covers the entire area
@@ -199,8 +244,29 @@ fun ChessBoardView(board: Board, modifier: Modifier) {
                 }
             }
         }
+
+        Column(
+            modifier = Modifier.alpha(if (board.currentTurn == PieceColor.WHITE) 1f else 0f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = "Game Controller",
+                tint = Color.White
+            )
+            Text(
+                text = "White move",
+                fontSize = 14.sp,
+                color = Color.White
+            )
+        }
+
         // Bottom captured pieces
-        LazyVerticalGrid(columns = GridCells.Fixed(squares)) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(squares),
+            modifier = Modifier.size(width = gridSize, height = captureSize)
+        ) {
             itemsIndexed(board.blackCapture) { _, piece ->
                 Image(
                     painter = painterResource(piece.pieceImage),
@@ -218,15 +284,14 @@ fun ChessBoardView(board: Board, modifier: Modifier) {
         }
 
         if (showPawnAlert) {
-            { showPawnAlert = false }.PawnPromotionAlert()
+            PawnPromotionDialog(
+                onDismiss = { showPawnAlert = false },
+                board = board
+            )
         }
 
         if (showCustomAlert) {
             CustomExitAlert(onDismiss = { showCustomAlert = false })
-        }
-
-        if (showMenuAlert) {
-            //TODO:
         }
     }
 }
@@ -264,28 +329,7 @@ fun WinAlert(onDismiss: () -> Unit, board: Board) {
         },
         confirmButton = {
             Button(onClick = onDismiss) {
-                Text("OK")
-            }
-        }
-    )
-}
-
-@Composable
-fun (() -> Unit).PawnPromotionAlert() {
-    AlertDialog(
-        onDismissRequest = this,
-        title = {
-            Text(text = "Pawn Promotion", fontSize = 24.sp)
-        },
-        text = {
-            Column {
-                Text("Choose a piece to promote your pawn to:")
-                // Example of dropdown or buttons for promotion
-            }
-        },
-        confirmButton = {
-            Button(onClick = this) {
-                Text("OK")
+                Text("Accept")
             }
         }
     )
@@ -309,6 +353,161 @@ fun CustomExitAlert(onDismiss: () -> Unit) {
         dismissButton = {
             Button(onClick = onDismiss) {
                 Text("No")
+            }
+        }
+    )
+}
+
+@Composable
+fun MenuAlert(
+    onDismiss: () -> Unit,
+    theme: BoardTheme,
+    onThemeChange: (BoardTheme) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = {
+            Text(text = "Game settings", fontSize = 24.sp, color = Color.Black)
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Board theme selection using a Dropdown (like a picker)
+                var expanded by remember { mutableStateOf(false) }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.LightGray, shape = RoundedCornerShape(8.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = when (theme) {
+                            BoardTheme.Black -> "Black"
+                            BoardTheme.Brown -> "Brown"
+                        },
+                        fontSize = 18.sp
+                    )
+
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Black") },
+                            onClick = {
+                                onThemeChange(BoardTheme.Black)
+                                expanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Brown") },
+                            onClick = {
+                                onThemeChange(BoardTheme.Brown)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Accept")
+            }
+        }
+    )
+}
+
+@Composable
+fun PawnPromotionDialog(
+    onDismiss: () -> Unit,
+    board: Board
+) {
+    var pieceTypeSelected: PieceType by remember { mutableStateOf( PieceType.QUEEN) }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = {
+            Text(
+                text = if (board.isWhiteKingCaptured) "Black pawn promotion!" else "White pawn promotion!",
+                fontSize = 24.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Promotion instruction
+                Text(text = "Select a piece type", fontSize = 18.sp)
+
+                // Dropdown (Picker) for selecting piece type
+                var expanded by remember { mutableStateOf(false) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.LightGray, shape = RoundedCornerShape(8.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = when (pieceTypeSelected) {
+                            PieceType.QUEEN -> "Queen"
+                            PieceType.KNIGHT -> "Knight"
+                            PieceType.BISHOP -> "Bishop"
+                            PieceType.ROOK -> "Rook"
+                            PieceType.KING -> ""
+                            PieceType.PAWN -> ""
+                        },
+                        fontSize = 18.sp
+                    )
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Queen") },
+                            onClick = {
+                                pieceTypeSelected = PieceType.QUEEN
+                                expanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Knight") },
+                            onClick = {
+                                pieceTypeSelected = PieceType.KNIGHT
+                                expanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Bishop") },
+                            onClick = {
+                                pieceTypeSelected = PieceType.BISHOP
+                                expanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Rook") },
+                            onClick = {
+                                pieceTypeSelected = PieceType.ROOK
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    board.promotePiece(pieceTypeSelected) // Promote the pawn
+                    onDismiss() // Close the dialog
+                }
+            ) {
+                Text("Accept")
             }
         }
     )
