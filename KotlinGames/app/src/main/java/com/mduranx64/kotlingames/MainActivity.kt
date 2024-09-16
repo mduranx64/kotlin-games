@@ -92,8 +92,8 @@ fun MainView(navController: NavHostController) {
 
     val gameList = listOf(
         GameItem(title = "Chess", imageResId = R.drawable.chess_cover, game = Game.Chess),
-        GameItem(title = "Coming Soon", imageResId = R.drawable.chess_cover, game = Game.ComingSoon),
-        GameItem(title = "Coming Soon", imageResId = R.drawable.chess_cover, game = Game.ComingSoon)
+        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = Game.ComingSoon),
+        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = Game.ComingSoon)
     )
 
     var showInfoAlert by remember { mutableStateOf(false) }

@@ -149,10 +149,10 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
 
-        val captureSize = if (board.blackCapture.count() > 8 || board.whiteCapture.count() > 8)  squareSize * 2 else squareSize
+        val captureSize = squareSize / 2
         // Top Captured pieces
         LazyVerticalGrid(
-            columns = GridCells.Fixed(squares),
+            columns = GridCells.Fixed(squares * 2),
             modifier = Modifier.size(width = gridSize, height = captureSize)
         ) {
             itemsIndexed(board.whiteCapture) { _, piece ->
@@ -161,7 +161,7 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(squareSize)
+                        .size(squareSize / 2)
                 )
             }
         }
@@ -295,7 +295,7 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
 
         // Bottom captured pieces
         LazyVerticalGrid(
-            columns = GridCells.Fixed(squares),
+            columns = GridCells.Fixed(squares * 2),
             modifier = Modifier.size(width = gridSize, height = captureSize)
         ) {
             itemsIndexed(board.blackCapture) { _, piece ->
@@ -304,7 +304,7 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(squareSize)
+                        .size(squareSize/2)
                 )
             }
         }
