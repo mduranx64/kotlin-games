@@ -123,7 +123,10 @@ fun ChessGame(navController: NavHostController) {
     if (showCustomAlert) {
         CustomExitAlert(
             onDismiss = { showCustomAlert = false },
-            onAccept = { navController.popBackStack() }
+            onAccept = {
+                showCustomAlert = false
+                navController.popBackStack()
+            }
         )
     }
 }
