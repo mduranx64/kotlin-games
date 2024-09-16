@@ -153,6 +153,9 @@ fun MainView(navController: NavHostController) {
 @Composable
 fun InfoAlert(onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val versionName = packageInfo.versionName
+    val versionCode = packageInfo.longVersionCode
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -180,7 +183,7 @@ fun InfoAlert(onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text("Version: 1.0", style = MaterialTheme.typography.bodyLarge)
+                Text("Version: $versionName ($versionCode)", style = MaterialTheme.typography.bodyLarge)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
