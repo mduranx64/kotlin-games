@@ -38,6 +38,16 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // Generate debug symbols for release builds
+            ndk {
+                // Enable native debug symbols generation
+                debugSymbolLevel = "FULL"
+            }
+            ndk {
+                // Optional: If you want to reduce the size, specify ABI filters
+                abiFilters += mutableSetOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64") // Only include ABIs you need
+            }
         }
     }
     compileOptions {
