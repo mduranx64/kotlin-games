@@ -1,6 +1,7 @@
 package com.mduranx64.kotlingames.ui.theme
 
 import android.os.Build
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -8,7 +9,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -54,4 +58,25 @@ fun KotlinGamesTheme(
         typography = Typography,
         content = content
     )
+
+    SetStatusBarColor(darkTheme = darkTheme)
+}
+
+@Composable
+fun SetStatusBarColor(darkTheme: Boolean) {
+    val context = LocalContext.current
+    val view = LocalView.current
+    val activity = context as? ComponentActivity
+
+    // Ensure we are in a proper activity context
+    activity?.let {
+        SideEffect {
+            // Retrieve the Window and the InsetsController
+            val window = it.window
+            val windowInsetsController = WindowCompat.getInsetsController(window, view)
+
+            // Set whether the status bar icons should be light or dark based on the theme
+            windowInsetsController.isAppearanceLightStatusBars = !darkTheme
+        }
+    }
 }
