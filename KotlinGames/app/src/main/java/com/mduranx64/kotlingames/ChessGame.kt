@@ -177,7 +177,7 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
                 tint = Color.Black
             )
             Text(
-                text = "Black move",
+                text = "Black moves",
                 fontSize = 14.sp,
                 color = Color.Black
             )
@@ -287,7 +287,7 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
                 tint = Color.White
             )
             Text(
-                text = "White move",
+                text = "White moves",
                 fontSize = 14.sp,
                 color = Color.White
             )
