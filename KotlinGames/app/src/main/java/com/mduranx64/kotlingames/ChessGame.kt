@@ -137,6 +137,9 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
     var showWinAlert: Boolean by remember { mutableStateOf(false) }
     var showPawnAlert: Boolean by remember { mutableStateOf(false) }
 
+    val letters = listOf("a", "b", "c", "d", "e", "f", "g", "h")
+    val numbers = listOf("8", "7", "6", "5", "4", "3", "2", "1")
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -178,9 +181,9 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
         }
 
         // Board and Pieces
-        Box (modifier = Modifier.size(width = gridSize, height = gridSize)){
+        Box (modifier = Modifier.size(width = gridSize, height = gridSize)) {
             // Board
-            LazyVerticalGrid(columns = GridCells.Fixed(squares)) {
+            LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
                 items(64) { index ->
                     val row = index % squares
                     val column = index / squares
@@ -190,13 +193,42 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
                         BoardTheme.Black -> if (isLight) R.drawable.square_gray_light else R.drawable.square_gray_dark
                         BoardTheme.Brown -> if (isLight) R.drawable.square_brown_light else R.drawable.square_brown_dark
                     }
+                    val color = if (isLight) Color.Black else Color.White
+                    val numberGuide = if (index < numbers.size) numbers[index] else ""
+                    val letterGuide = if (row == 7) letters[column] else ""
 
-                    Image(
-                        painter = painterResource(id = finalTheme),
-                        contentDescription = null,
-                        modifier = Modifier.size(squareSize), // Adjust the size of each square
-                        contentScale = ContentScale.Fit // Ensures the image covers the entire area
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(squareSize)
+                            .padding(0.dp),
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.TopStart
+                        ) {
+                            Image(
+                                painter = painterResource(id = finalTheme),
+                                contentDescription = null,
+                                modifier = Modifier.size(squareSize), // Adjust the size of each square
+                                contentScale = ContentScale.Fit // Ensures the image covers the entire area
+                            )
+                            // Top-left number guide
+                            Text(
+                                text = numberGuide,
+                                color = color,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(start = 0.dp, top = 0.dp)
+                            )
+                        }
+                        // Bottom-right letter guide
+                        Text(
+                            text = letterGuide,
+                            color = color,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(end = 0.dp, bottom = 0.dp)
+                        )
+                    }
                 }
             }
             // Pieces
