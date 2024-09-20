@@ -54,7 +54,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mduranx64.kotlingames.ui.theme.KotlinGamesTheme
 
-enum class Game {
+enum class GameType {
     Chess,
     ComingSoon
 }
@@ -63,7 +63,7 @@ enum class Game {
 data class GameItem(
     val title: String,
     val imageResId: Int,
-    val game: Game
+    val game: GameType
 )
 
 class MainActivity : ComponentActivity() {
@@ -91,9 +91,9 @@ fun Navigation(navController: NavHostController) {
 fun MainView(navController: NavHostController) {
 
     val gameList = listOf(
-        GameItem(title = "Chess", imageResId = R.drawable.chess_cover, game = Game.Chess),
-        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = Game.ComingSoon),
-        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = Game.ComingSoon)
+        GameItem(title = "Chess", imageResId = R.drawable.chess_cover, game = GameType.Chess),
+        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon),
+        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon)
     )
 
     var showInfoAlert by remember { mutableStateOf(false) }
@@ -136,8 +136,11 @@ fun MainView(navController: NavHostController) {
                 ) {
                     items(gameList.size) { index ->
                         val item = gameList[index]
+
                         GameView(title = item.title, imageResId = item.imageResId) {
-                            navController.navigate(item.title)
+                            if (item.game != GameType.ComingSoon) {
+                                navController.navigate(item.title)
+                            }
                         }
                     }
                 }

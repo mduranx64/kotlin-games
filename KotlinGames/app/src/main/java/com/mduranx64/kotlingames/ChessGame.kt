@@ -102,10 +102,11 @@ fun ChessGame(navController: NavHostController) {
         },
         content = { paddingValues ->
             ChessBoardView(
-                board = remember { board }, // Pass a Board object here
+                navController = navController,
+                board = remember { board },
                 boardTheme = currentTheme,
                 modifier = Modifier
-                    .padding(paddingValues) // Respect the Scaffold padding for the content
+                    .padding(paddingValues)
                     .fillMaxSize()
                     .background(Color.Gray)
             )
@@ -132,7 +133,7 @@ fun ChessGame(navController: NavHostController) {
 }
 
 @Composable
-fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
+fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: BoardTheme, modifier: Modifier) {
     val squares = 8
     val gridSize = LocalConfiguration.current.screenWidthDp.coerceAtMost(LocalConfiguration.current.screenHeightDp).dp
     val squareSize = gridSize / squares
@@ -311,7 +312,13 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
 
         // Alerts (for example, when the game is won or a pawn promotion)
         if (showWinAlert) {
-            WinAlert(onDismiss = { showWinAlert = false }, board = board)
+            WinAlert(
+                board = board,
+                onDismiss = {
+                    showWinAlert = false
+                    navController.popBackStack()
+                }
+            )
         }
 
         if (showPawnAlert) {
@@ -324,7 +331,7 @@ fun ChessBoardView(board: Board, boardTheme: BoardTheme, modifier: Modifier) {
 }
 
 @Composable
-fun WinAlert(onDismiss: () -> Unit, board: Board) {
+fun WinAlert(board: Board, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -338,14 +345,12 @@ fun WinAlert(onDismiss: () -> Unit, board: Board) {
             ) {
                 // Add image of the winning king (either black or white)
                 val imageResId = if (board.isWhiteKingCaptured) R.drawable.b_king else R.drawable.w_king
-
                 Image(
                     painter = painterResource(id = imageResId),
                     contentDescription = null,
                     modifier = Modifier.size(80.dp),  // Size of the image
                     contentScale = ContentScale.Fit
                 )
-
                 Spacer(modifier = Modifier.height(16.dp)) // Add some spacing between image and text
                 // Show the winning message
                 Text(
@@ -571,7 +576,7 @@ fun DefaultPreviewDark() {
 @Composable
 fun PreviewWinAlertLight() {
     KotlinGamesTheme {
-        WinAlert(onDismiss = { }, board = Board())
+//        WinAlert(onDismiss = { }, board = Board())
     }
 }
 
@@ -579,7 +584,7 @@ fun PreviewWinAlertLight() {
 @Composable
 fun PreviewWinAlertDark() {
     KotlinGamesTheme(darkTheme = true) {
-        WinAlert(onDismiss = { }, board = Board())
+//        WinAlert(onDismiss = { }, board = Board())
     }
 }
 
