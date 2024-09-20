@@ -1,5 +1,6 @@
 package com.mduranx64.kotlingames
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,11 +10,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
@@ -54,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.mduranx64.kotlingames.ui.theme.KotlinGamesTheme
+import androidx.compose.ui.platform.LocalDensity
 
 enum class BoardTheme {
     Black,
@@ -134,8 +139,15 @@ fun ChessGame(navController: NavHostController) {
 
 @Composable
 fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: BoardTheme, modifier: Modifier) {
+
+    val configuration = LocalConfiguration.current
+
+    val topPadding = WindowInsets.systemBars.getTop(LocalDensity.current)
+    val bottomPadding = WindowInsets.systemBars.getBottom(LocalDensity.current)
+
     val squares = 8
-    val gridSize = LocalConfiguration.current.screenWidthDp.coerceAtMost(LocalConfiguration.current.screenHeightDp).dp
+    val fullScreenSize = configuration.screenWidthDp.coerceAtMost(configuration.screenHeightDp)
+    val gridSize = if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) fullScreenSize.dp else (fullScreenSize - (topPadding + bottomPadding)).dp
     val squareSize = gridSize / squares
 
     var showWinAlert: Boolean by remember { mutableStateOf(false) }
@@ -143,198 +155,384 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
 
     val letters = listOf("a", "b", "c", "d", "e", "f", "g", "h")
     val numbers = listOf("8", "7", "6", "5", "4", "3", "2", "1")
+    val captureSize = squareSize / 2
 
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-
-        val captureSize = squareSize / 2
-        // Top Captured pieces
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(squares * 2),
-            modifier = Modifier.size(width = gridSize, height = captureSize)
-        ) {
-            itemsIndexed(board.whiteCapture) { _, piece ->
-                Image(
-                    painter = painterResource(piece.pieceImage),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(squareSize / 2)
-                )
-            }
-        }
-
+    if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
         Column(
-            modifier = Modifier.alpha(if (board.currentTurn == PieceColor.BLACK) 1f else 0f),
+            modifier = modifier,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = "Game Controller",
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                text = "Black moves",
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        }
 
-        // Board and Pieces
-        Box (modifier = Modifier.size(width = gridSize, height = gridSize)) {
-            // Board
-            LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
-                items(64) { index ->
-                    val row = index % squares
-                    val column = index / squares
-                    val isLight = (row + column) % 2 == 0
-
-                    val finalTheme = when (boardTheme) {
-                        BoardTheme.Black -> if (isLight) R.drawable.square_gray_light else R.drawable.square_gray_dark
-                        BoardTheme.Brown -> if (isLight) R.drawable.square_brown_light else R.drawable.square_brown_dark
-                    }
-                    val color = if (isLight) Color.Black else Color.White
-                    val numberGuide = if (index < numbers.size) numbers[index] else ""
-                    val letterGuide = if (row == 7) letters[column] else ""
-
-                    Box(
+            // Top Captured pieces
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(squares * 2),
+                modifier = Modifier.size(width = gridSize, height = captureSize)
+            ) {
+                itemsIndexed(board.whiteCapture) { _, piece ->
+                    Image(
+                        painter = painterResource(piece.pieceImage),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
-                            .size(squareSize)
-                            .padding(0.dp),
-                        contentAlignment = Alignment.BottomEnd
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.TopStart
-                        ) {
-                            Image(
-                                painter = painterResource(id = finalTheme),
-                                contentDescription = null,
-                                modifier = Modifier.size(squareSize), // Adjust the size of each square
-                                contentScale = ContentScale.Fit // Ensures the image covers the entire area
-                            )
-                            // Top-left number guide
-                            Text(
-                                text = numberGuide,
-                                color = color,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(start = 0.dp, top = 0.dp)
-                            )
-                        }
-                        // Bottom-right letter guide
-                        Text(
-                            text = letterGuide,
-                            color = color,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(end = 0.dp, bottom = 0.dp)
-                        )
-                    }
+                            .size(squareSize / 2)
+                    )
                 }
             }
-            // Pieces
-            LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
-                items(board.pieces.size) { x ->
-                    val row = board.pieces[x]
-                    Row {
-                        row.forEachIndexed { y, piece ->
-                            val pieceImage = row[y]?.pieceImage ?: R.drawable.empty
-                            val position = Position(x, y)
-                            val isLight = (x + y) % 2 == 0
 
-                            val name = piece?.type?.name ?: "empty"
-                            val color = piece?.color?.name ?: if (isLight) "white square" else "black square"
-                            val numberGuide = numbers[x]
-                            val letterGuide = letters[y]
+            Column(
+                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.BLACK) 1f else 0f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Game Controller",
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Black moves",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
 
-                            val identifier = "$color $name $letterGuide$numberGuide"
+            // Board and Pieces
+            Box(modifier = Modifier.size(width = gridSize, height = gridSize)) {
+                // Board
+                LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
+                    items(64) { index ->
+                        val row = index % squares
+                        val column = index / squares
+                        val isLight = (row + column) % 2 == 0
+
+                        val finalTheme = when (boardTheme) {
+                            BoardTheme.Black -> if (isLight) R.drawable.square_gray_light else R.drawable.square_gray_dark
+                            BoardTheme.Brown -> if (isLight) R.drawable.square_brown_light else R.drawable.square_brown_dark
+                        }
+                        val color = if (isLight) Color.Black else Color.White
+                        val numberGuide = if (index < numbers.size) numbers[index] else ""
+                        val letterGuide = if (row == 7) letters[column] else ""
+
+                        Box(
+                            modifier = Modifier
+                                .size(squareSize)
+                                .padding(0.dp),
+                            contentAlignment = Alignment.BottomEnd
+                        ) {
                             Box(
-                                modifier = Modifier
-                                    .size(squareSize)
-                                    .background(Color.Transparent)
-                                    .border(
-                                        2.dp,
-                                        if (board.isSelected(position)) Color.Yellow else Color.Transparent
-                                    )
-                                    .clickable {
-                                        board.selectPiece(position)
-                                        if (board.isBlackKingCaptured || board.isWhiteKingCaptured) {
-                                            showWinAlert = true
-                                        }
-                                        if (board.isPiecePromoted) {
-                                            showPawnAlert = true
-                                        }
-                                    }
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.TopStart
                             ) {
-                                piece?.let {
-                                    Image(
-                                        painter = painterResource(pieceImage),
-                                        contentDescription = identifier,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(2.dp)
-                                    )
+                                Image(
+                                    painter = painterResource(id = finalTheme),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(squareSize), // Adjust the size of each square
+                                    contentScale = ContentScale.Fit // Ensures the image covers the entire area
+                                )
+                                // Top-left number guide
+                                Text(
+                                    text = numberGuide,
+                                    color = color,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(start = 0.dp, top = 0.dp)
+                                )
+                            }
+                            // Bottom-right letter guide
+                            Text(
+                                text = letterGuide,
+                                color = color,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(end = 0.dp, bottom = 0.dp)
+                            )
+                        }
+                    }
+                }
+                // Pieces
+                LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
+                    items(board.pieces.size) { x ->
+                        val row = board.pieces[x]
+                        Row {
+                            row.forEachIndexed { y, piece ->
+                                val pieceImage = row[y]?.pieceImage ?: R.drawable.empty
+                                val position = Position(x, y)
+                                val isLight = (x + y) % 2 == 0
+
+                                val name = piece?.type?.name ?: "empty"
+                                val color = piece?.color?.name
+                                    ?: if (isLight) "white square" else "black square"
+                                val numberGuide = numbers[x]
+                                val letterGuide = letters[y]
+
+                                val identifier = "$color $name $letterGuide$numberGuide"
+                                Box(
+                                    modifier = Modifier
+                                        .size(squareSize)
+                                        .background(Color.Transparent)
+                                        .border(
+                                            2.dp,
+                                            if (board.isSelected(position)) Color.Yellow else Color.Transparent
+                                        )
+                                        .clickable {
+                                            board.selectPiece(position)
+                                            if (board.isBlackKingCaptured || board.isWhiteKingCaptured) {
+                                                showWinAlert = true
+                                            }
+                                            if (board.isPiecePromoted) {
+                                                showPawnAlert = true
+                                            }
+                                        }
+                                ) {
+                                    piece?.let {
+                                        Image(
+                                            painter = painterResource(pieceImage),
+                                            contentDescription = identifier,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(2.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier.alpha(if (board.currentTurn == PieceColor.WHITE) 1f else 0f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = "Play",
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                text = "White moves",
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        }
-
-        // Bottom captured pieces
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(squares * 2),
-            modifier = Modifier.size(width = gridSize, height = captureSize)
-        ) {
-            itemsIndexed(board.blackCapture) { _, piece ->
-                Image(
-                    painter = painterResource(piece.pieceImage),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(squareSize/2)
+            Column(
+                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.WHITE) 1f else 0f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play",
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "White moves",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
-        }
 
-        // Alerts (for example, when the game is won or a pawn promotion)
-        if (showWinAlert) {
-            WinAlert(
-                board = board,
-                onDismiss = {
-                    showWinAlert = false
-                    navController.popBackStack()
+            // Bottom captured pieces
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(squares * 2),
+                modifier = Modifier.size(width = gridSize, height = captureSize)
+            ) {
+                itemsIndexed(board.blackCapture) { _, piece ->
+                    Image(
+                        painter = painterResource(piece.pieceImage),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(squareSize / 2)
+                    )
                 }
-            )
+            }
         }
+    } else {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
-        if (showPawnAlert) {
-            PawnPromotionDialog(
-                onDismiss = { showPawnAlert = false },
-                board = board
-            )
+            // Top Captured pieces
+            LazyHorizontalGrid(
+                rows = GridCells.Fixed(squares * 2),
+                modifier = Modifier.size(width = captureSize, height = gridSize)
+            ) {
+                itemsIndexed(board.whiteCapture) { _, piece ->
+                    Image(
+                        painter = painterResource(piece.pieceImage),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(squareSize / 2)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.BLACK) 1f else 0f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Game Controller",
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Black moves",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Board and Pieces
+            Box(modifier = Modifier.size(gridSize)) {
+                // Board
+                LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
+                    items(64) { index ->
+                        val row = index % squares
+                        val column = index / squares
+                        val isLight = (row + column) % 2 == 0
+
+                        val finalTheme = when (boardTheme) {
+                            BoardTheme.Black -> if (isLight) R.drawable.square_gray_light else R.drawable.square_gray_dark
+                            BoardTheme.Brown -> if (isLight) R.drawable.square_brown_light else R.drawable.square_brown_dark
+                        }
+                        val color = if (isLight) Color.Black else Color.White
+                        val numberGuide = if (index < numbers.size) numbers[index] else ""
+                        val letterGuide = if (row == 7) letters[column] else ""
+
+                        Box(
+                            modifier = Modifier
+                                .size(squareSize)
+                                .padding(0.dp),
+                            contentAlignment = Alignment.BottomEnd
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.TopStart
+                            ) {
+                                Image(
+                                    painter = painterResource(id = finalTheme),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(squareSize), // Adjust the size of each square
+                                    contentScale = ContentScale.Fit // Ensures the image covers the entire area
+                                )
+                                // Top-left number guide
+                                Text(
+                                    text = numberGuide,
+                                    color = color,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(start = 0.dp, top = 0.dp)
+                                )
+                            }
+                            // Bottom-right letter guide
+                            Text(
+                                text = letterGuide,
+                                color = color,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(end = 0.dp, bottom = 0.dp)
+                            )
+                        }
+                    }
+                }
+                // Pieces
+                LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
+                    items(board.pieces.size) { x ->
+                        val row = board.pieces[x]
+                        Row {
+                            row.forEachIndexed { y, piece ->
+                                val pieceImage = row[y]?.pieceImage ?: R.drawable.empty
+                                val position = Position(x, y)
+                                val isLight = (x + y) % 2 == 0
+
+                                val name = piece?.type?.name ?: "empty"
+                                val color = piece?.color?.name
+                                    ?: if (isLight) "white square" else "black square"
+                                val numberGuide = numbers[x]
+                                val letterGuide = letters[y]
+
+                                val identifier = "$color $name $letterGuide$numberGuide"
+                                Box(
+                                    modifier = Modifier
+                                        .size(squareSize)
+                                        .background(Color.Transparent)
+                                        .border(
+                                            2.dp,
+                                            if (board.isSelected(position)) Color.Yellow else Color.Transparent
+                                        )
+                                        .clickable {
+                                            board.selectPiece(position)
+                                            if (board.isBlackKingCaptured || board.isWhiteKingCaptured) {
+                                                showWinAlert = true
+                                            }
+                                            if (board.isPiecePromoted) {
+                                                showPawnAlert = true
+                                            }
+                                        }
+                                ) {
+                                    piece?.let {
+                                        Image(
+                                            painter = painterResource(pieceImage),
+                                            contentDescription = identifier,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.WHITE) 1f else 0f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play",
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "White moves",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Bottom captured pieces
+            LazyHorizontalGrid(
+                rows = GridCells.Fixed(squares * 2),
+                modifier = Modifier.size(width = captureSize, height = gridSize)
+            ) {
+                itemsIndexed(board.blackCapture) { _, piece ->
+                    Image(
+                        painter = painterResource(piece.pieceImage),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(squareSize / 2)
+                    )
+                }
+            }
         }
+    }
+
+    // Alerts (for example, when the game is won or a pawn promotion)
+    if (showWinAlert) {
+        WinAlert(
+            board = board,
+            onDismiss = {
+                showWinAlert = false
+                navController.popBackStack()
+            }
+        )
+    }
+
+    if (showPawnAlert) {
+        PawnPromotionDialog(
+            onDismiss = { showPawnAlert = false },
+            board = board
+        )
     }
 }
 
