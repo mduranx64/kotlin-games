@@ -41,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -92,8 +91,8 @@ fun MainView(navController: NavHostController) {
 
     val gameList = listOf(
         GameItem(title = "Chess", imageResId = R.drawable.chess_cover, game = GameType.Chess),
-        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon),
-        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon)
+//        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon),
+//        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon)
     )
 
     var showInfoAlert by remember { mutableStateOf(false) }
@@ -157,8 +156,8 @@ fun MainView(navController: NavHostController) {
 fun InfoAlert(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-    val versionName = packageInfo.versionName
-    val versionCode = packageInfo.longVersionCode
+    val versionName = packageInfo?.versionName
+    val versionCode = packageInfo?.longVersionCode
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -193,7 +192,7 @@ fun InfoAlert(onDismiss: () -> Unit) {
                 // Clickable text using Modifier.clickable
                 Text(
                     text = "Visit the repository on GitHub",
-                    color = Color.Blue,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.clickable {
                         // Open the link in a browser

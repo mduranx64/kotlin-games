@@ -108,7 +108,7 @@ fun ChessGame(navController: NavHostController) {
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize()
-                    .background(Color.Gray)
+                    .background(MaterialTheme.colorScheme.background)
             )
         }
     )
@@ -175,12 +175,12 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "Game Controller",
-                tint = Color.Black
+                tint = MaterialTheme.colorScheme.secondary
             )
             Text(
                 text = "Black moves",
-                fontSize = 14.sp,
-                color = Color.Black
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.secondary
             )
         }
 
@@ -285,12 +285,12 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "Game Controller",
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.secondary
             )
             Text(
                 text = "White moves",
-                fontSize = 14.sp,
-                color = Color.White
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.secondary
             )
         }
 
