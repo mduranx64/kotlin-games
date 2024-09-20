@@ -243,6 +243,14 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                         row.forEachIndexed { y, piece ->
                             val pieceImage = row[y]?.pieceImage ?: R.drawable.empty
                             val position = Position(x, y)
+                            val isLight = (x + y) % 2 == 0
+
+                            val name = piece?.type?.name ?: "empty"
+                            val color = piece?.color?.name ?: if (isLight) "white square" else "black square"
+                            val numberGuide = numbers[x]
+                            val letterGuide = letters[y]
+
+                            val identifier = "$color $name $letterGuide$numberGuide"
                             Box(
                                 modifier = Modifier
                                     .size(squareSize)
@@ -264,7 +272,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                                 piece?.let {
                                     Image(
                                         painter = painterResource(pieceImage),
-                                        contentDescription = null,
+                                        contentDescription = identifier,
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(2.dp)
@@ -284,7 +292,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
         ) {
             Icon(
                 imageVector = Icons.Default.PlayArrow,
-                contentDescription = "Game Controller",
+                contentDescription = "Play",
                 tint = MaterialTheme.colorScheme.secondary
             )
             Text(

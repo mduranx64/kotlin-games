@@ -169,7 +169,7 @@ fun InfoAlert(onDismiss: () -> Unit) {
                 // Add the image (replace R.drawable.kotlin_logo with your actual image resource)
                 Image(
                     painter = painterResource(id = R.drawable.dev), // Use an actual image resource
-                    contentDescription = "Kotlin Logo",
+                    contentDescription = "face",
                     modifier = Modifier
                         .size(100.dp)
                         .padding(8.dp),
