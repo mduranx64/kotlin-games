@@ -201,7 +201,10 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
             }
 
             // Board and Pieces
-            Box(modifier = Modifier.size(width = gridSize, height = gridSize)) {
+            Box(
+                modifier = Modifier.size(gridSize)
+                    .background(Color.DarkGray)
+            ) {
                 // Board
                 LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
                     items(64) { index ->
@@ -252,7 +255,9 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
                     }
                 }
                 // Pieces
-                LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
+                LazyHorizontalGrid(
+                    rows = GridCells.Fixed(squares)
+                ) {
                     items(viewModel.board.pieces.size) { x ->
                         val row = viewModel.board.pieces[x]
                         Row {
@@ -380,7 +385,10 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
             Spacer(modifier = Modifier.width(16.dp))
 
             // Board and Pieces
-            Box(modifier = Modifier.size(gridSize)) {
+            Box(
+                modifier = Modifier.size(gridSize)
+                    .background(Color.DarkGray)
+            ) {
                 // Board
                 LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
                     items(64) { index ->
@@ -431,7 +439,9 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
                     }
                 }
                 // Pieces
-                LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
+                LazyHorizontalGrid(
+                    rows = GridCells.Fixed(squares)
+                ) {
                     items(viewModel.board.pieces.size) { x ->
                         val row = viewModel.board.pieces[x]
                         Row {
