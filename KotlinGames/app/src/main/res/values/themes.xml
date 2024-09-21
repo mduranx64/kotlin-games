@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.KotlinGames" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.KotlinGames" parent="android:Theme.Material.Light.NoActionBar">
+    </style>
+    <style name="Theme.KotlinGames.Splash" parent="android:Theme.Material.Light.NoActionBar.Fullscreen">
+        <item name="android:statusBarColor">#6650a4</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
 </resources>
