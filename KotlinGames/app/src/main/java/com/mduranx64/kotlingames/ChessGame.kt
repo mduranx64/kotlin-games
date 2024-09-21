@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,8 +60,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.mduranx64.kotlingames.ui.theme.KotlinGamesTheme
 import androidx.compose.ui.platform.LocalDensity
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.io.Serializable
 
-enum class BoardTheme {
+enum class BoardTheme: Serializable {
     Black,
     Brown
 }
@@ -68,10 +71,10 @@ enum class BoardTheme {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChessGame(navController: NavHostController) {
-    var showMenuAlert by remember { mutableStateOf(false) }
-    var currentTheme by remember { mutableStateOf(BoardTheme.Black) }
-    var showCustomAlert: Boolean by remember { mutableStateOf(false) }
-    val board by remember { mutableStateOf(Board()) }
+    var showMenuAlert by rememberSaveable { mutableStateOf(false) }
+    var currentTheme by rememberSaveable { mutableStateOf(BoardTheme.Black) }
+    var showCustomAlert by rememberSaveable { mutableStateOf(false) }
+    val chessViewModel: ChessViewModel = viewModel()
 
     Scaffold(
         topBar = {
@@ -108,7 +111,7 @@ fun ChessGame(navController: NavHostController) {
         content = { paddingValues ->
             ChessBoardView(
                 navController = navController,
-                board = remember { board },
+                viewModel = chessViewModel,
                 boardTheme = currentTheme,
                 modifier = Modifier
                     .padding(paddingValues)
@@ -138,7 +141,7 @@ fun ChessGame(navController: NavHostController) {
 }
 
 @Composable
-fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: BoardTheme, modifier: Modifier) {
+fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel = viewModel(), boardTheme: BoardTheme, modifier: Modifier) {
 
     val configuration = LocalConfiguration.current
 
@@ -150,8 +153,8 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
     val gridSize = if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) fullScreenSize.dp else (fullScreenSize - (topPadding + bottomPadding)).dp
     val squareSize = gridSize / squares
 
-    var showWinAlert: Boolean by remember { mutableStateOf(false) }
-    var showPawnAlert: Boolean by remember { mutableStateOf(false) }
+    var showWinAlert: Boolean by rememberSaveable { mutableStateOf(false) }
+    var showPawnAlert: Boolean by rememberSaveable { mutableStateOf(false) }
 
     val letters = listOf("a", "b", "c", "d", "e", "f", "g", "h")
     val numbers = listOf("8", "7", "6", "5", "4", "3", "2", "1")
@@ -169,7 +172,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                 columns = GridCells.Fixed(squares * 2),
                 modifier = Modifier.size(width = gridSize, height = captureSize)
             ) {
-                itemsIndexed(board.whiteCapture) { _, piece ->
+                itemsIndexed(viewModel.board.whiteCapture) { _, piece ->
                     Image(
                         painter = painterResource(piece.pieceImage),
                         contentDescription = null,
@@ -181,7 +184,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
             }
 
             Column(
-                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.BLACK) 1f else 0f),
+                modifier = Modifier.alpha(if (viewModel.board.currentTurn == PieceColor.BLACK) 1f else 0f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -250,8 +253,8 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                 }
                 // Pieces
                 LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
-                    items(board.pieces.size) { x ->
-                        val row = board.pieces[x]
+                    items(viewModel.board.pieces.size) { x ->
+                        val row = viewModel.board.pieces[x]
                         Row {
                             row.forEachIndexed { y, piece ->
                                 val pieceImage = row[y]?.pieceImage ?: R.drawable.empty
@@ -271,14 +274,14 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                                         .background(Color.Transparent)
                                         .border(
                                             2.dp,
-                                            if (board.isSelected(position)) Color.Yellow else Color.Transparent
+                                            if (viewModel.board.isSelected(position)) Color.Yellow else Color.Transparent
                                         )
                                         .clickable {
-                                            board.selectPiece(position)
-                                            if (board.isBlackKingCaptured || board.isWhiteKingCaptured) {
+                                            viewModel.board.selectPiece(position)
+                                            if (viewModel.board.isBlackKingCaptured || viewModel.board.isWhiteKingCaptured) {
                                                 showWinAlert = true
                                             }
-                                            if (board.isPiecePromoted) {
+                                            if (viewModel.board.isPiecePromoted) {
                                                 showPawnAlert = true
                                             }
                                         }
@@ -300,7 +303,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
             }
 
             Column(
-                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.WHITE) 1f else 0f),
+                modifier = Modifier.alpha(if (viewModel.board.currentTurn == PieceColor.WHITE) 1f else 0f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -321,7 +324,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                 columns = GridCells.Fixed(squares * 2),
                 modifier = Modifier.size(width = gridSize, height = captureSize)
             ) {
-                itemsIndexed(board.blackCapture) { _, piece ->
+                itemsIndexed(viewModel.board.blackCapture) { _, piece ->
                     Image(
                         painter = painterResource(piece.pieceImage),
                         contentDescription = null,
@@ -344,7 +347,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                 rows = GridCells.Fixed(squares * 2),
                 modifier = Modifier.size(width = captureSize, height = gridSize)
             ) {
-                itemsIndexed(board.whiteCapture) { _, piece ->
+                itemsIndexed(viewModel.board.whiteCapture) { _, piece ->
                     Image(
                         painter = painterResource(piece.pieceImage),
                         contentDescription = null,
@@ -358,7 +361,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
-                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.BLACK) 1f else 0f),
+                modifier = Modifier.alpha(if (viewModel.board.currentTurn == PieceColor.BLACK) 1f else 0f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -429,8 +432,8 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                 }
                 // Pieces
                 LazyHorizontalGrid(rows = GridCells.Fixed(squares)) {
-                    items(board.pieces.size) { x ->
-                        val row = board.pieces[x]
+                    items(viewModel.board.pieces.size) { x ->
+                        val row = viewModel.board.pieces[x]
                         Row {
                             row.forEachIndexed { y, piece ->
                                 val pieceImage = row[y]?.pieceImage ?: R.drawable.empty
@@ -450,14 +453,14 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                                         .background(Color.Transparent)
                                         .border(
                                             2.dp,
-                                            if (board.isSelected(position)) Color.Yellow else Color.Transparent
+                                            if (viewModel.board.isSelected(position)) Color.Yellow else Color.Transparent
                                         )
                                         .clickable {
-                                            board.selectPiece(position)
-                                            if (board.isBlackKingCaptured || board.isWhiteKingCaptured) {
+                                            viewModel.board.selectPiece(position)
+                                            if (viewModel.board.isBlackKingCaptured || viewModel.board.isWhiteKingCaptured) {
                                                 showWinAlert = true
                                             }
-                                            if (board.isPiecePromoted) {
+                                            if (viewModel.board.isPiecePromoted) {
                                                 showPawnAlert = true
                                             }
                                         }
@@ -481,7 +484,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
-                modifier = Modifier.alpha(if (board.currentTurn == PieceColor.WHITE) 1f else 0f),
+                modifier = Modifier.alpha(if (viewModel.board.currentTurn == PieceColor.WHITE) 1f else 0f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -504,7 +507,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
                 rows = GridCells.Fixed(squares * 2),
                 modifier = Modifier.size(width = captureSize, height = gridSize)
             ) {
-                itemsIndexed(board.blackCapture) { _, piece ->
+                itemsIndexed(viewModel.board.blackCapture) { _, piece ->
                     Image(
                         painter = painterResource(piece.pieceImage),
                         contentDescription = null,
@@ -520,7 +523,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
     // Alerts (for example, when the game is won or a pawn promotion)
     if (showWinAlert) {
         WinAlert(
-            board = board,
+            board = viewModel.board,
             onDismiss = {
                 showWinAlert = false
                 navController.popBackStack()
@@ -531,7 +534,7 @@ fun ChessBoardView(navController: NavHostController, board: Board, boardTheme: B
     if (showPawnAlert) {
         PawnPromotionDialog(
             onDismiss = { showPawnAlert = false },
-            board = board
+            board = viewModel.board
         )
     }
 }

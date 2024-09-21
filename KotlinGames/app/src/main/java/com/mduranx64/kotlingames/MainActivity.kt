@@ -36,9 +36,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,15 +91,12 @@ fun Navigation(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainView(navController: NavHostController) {
-
     val gameList = listOf(
-        GameItem(title = "Chess", imageResId = R.drawable.chess_cover, game = GameType.Chess),
-//        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon),
-//        GameItem(title = "Coming Soon", imageResId = R.drawable.coming_soon, game = GameType.ComingSoon)
+        GameItem(title = "Chess", imageResId = R.drawable.chess_cover, game = GameType.Chess)
     )
-
-    var showInfoAlert by remember { mutableStateOf(false) }
+    var showInfoAlert by rememberSaveable { mutableStateOf(false) }
     val columns = if (LocalConfiguration.current.screenWidthDp < LocalConfiguration.current.screenHeightDp) 2 else 4
+
     Scaffold(
         topBar = {
             TopAppBar(
