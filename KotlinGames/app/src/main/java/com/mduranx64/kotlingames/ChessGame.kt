@@ -60,6 +60,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.mduranx64.kotlingames.ui.theme.KotlinGamesTheme
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.io.Serializable
 
@@ -166,7 +168,6 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             // Top Captured pieces
             LazyVerticalGrid(
                 columns = GridCells.Fixed(squares * 2),
@@ -202,7 +203,8 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
 
             // Board and Pieces
             Box(
-                modifier = Modifier.size(gridSize)
+                modifier = Modifier
+                    .size(gridSize)
                     .background(Color.DarkGray)
             ) {
                 // Board
@@ -289,6 +291,10 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
                                             if (viewModel.board.isPiecePromoted) {
                                                 showPawnAlert = true
                                             }
+                                        }
+                                        .semantics {
+                                            contentDescription =
+                                                if (piece == null) identifier else ""
                                         }
                                 ) {
                                     piece?.let {
@@ -386,7 +392,8 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
 
             // Board and Pieces
             Box(
-                modifier = Modifier.size(gridSize)
+                modifier = Modifier
+                    .size(gridSize)
                     .background(Color.DarkGray)
             ) {
                 // Board
@@ -474,6 +481,10 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
                                                 showPawnAlert = true
                                             }
                                         }
+                                        .semantics {
+                                            contentDescription =
+                                                if (piece == null) identifier else ""
+                                        }
                                 ) {
                                     piece?.let {
                                         Image(
@@ -552,7 +563,7 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
 @Composable
 fun WinAlert(board: Board, onDismiss: () -> Unit) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { },
         title = {
             Column(
                 modifier = Modifier
@@ -684,7 +695,7 @@ fun PawnPromotionDialog(
     var pieceTypeSelected: PieceType by remember { mutableStateOf( PieceType.QUEEN) }
 
     AlertDialog(
-        onDismissRequest = { onDismiss() },
+        onDismissRequest = { },
         title = {
             Text(
                 text = if (board.isWhiteKingCaptured) "Black pawn promotion!" else "White pawn promotion!",
@@ -795,7 +806,7 @@ fun DefaultPreviewDark() {
 @Composable
 fun PreviewWinAlertLight() {
     KotlinGamesTheme {
-//        WinAlert(onDismiss = { }, board = Board())
+        WinAlert(onDismiss = { }, board = Board())
     }
 }
 
@@ -803,7 +814,7 @@ fun PreviewWinAlertLight() {
 @Composable
 fun PreviewWinAlertDark() {
     KotlinGamesTheme(darkTheme = true) {
-//        WinAlert(onDismiss = { }, board = Board())
+        WinAlert(onDismiss = { }, board = Board())
     }
 }
 
