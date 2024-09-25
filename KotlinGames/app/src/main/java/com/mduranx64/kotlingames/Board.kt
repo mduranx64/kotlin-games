@@ -70,7 +70,7 @@ class Board {
         if (selectedPosition != null && pieceAtPosition?.type != null) {
             selectedPosition?.let { from ->
                 if (getPieceAt(from)?.color == pieceAtPosition.color &&
-                    getPieceAt(from)?.type == PieceType.ROOK &&
+                    getPieceAt(from)?.type == PieceType.KING &&
                     pieceAtPosition.type == PieceType.ROOK
                 ) {
                     selectedPosition = if (movePiece(from, newPosition)) null else newPosition
@@ -111,43 +111,102 @@ class Board {
         val piece = getPieceAt(from) ?: return false
         if (piece.color != currentTurn) return false
 
-        val destination = getPieceAt(to)
         var isMoved = false
 
         when (piece.type) {
             PieceType.PAWN -> {
-                val direction = if (piece.color == PieceColor.WHITE) 1 else -1
-                val startRow = if (piece.color == PieceColor.WHITE) 6 else 1
-                val endRow = if (piece.color == PieceColor.WHITE) 0 else 7
+                if (getPieceAt(to) == null && from.y == to.y) {  // move
+                    val oneStep = if (piece.color == PieceColor.WHITE) 1 else -1
+                    val twoStep = if (piece.color == PieceColor.WHITE) 2 else -2
+                    val xStep = from.x - to.x
 
-                // Pawn movement: One or two squares forward
-                if (destination == null && from.y == to.y) {
-                    if (from.x - to.x == direction) {
+                    if (xStep == oneStep) {  // one step
                         piece.isFirstMove = false
                         move(piece, from, to)
                         isMoved = true
-                    } else if (from.x - to.x == 2 * direction && piece.isFirstMove && from.x == startRow) {
+                    } else if (xStep == twoStep && piece.isFirstMove) {  // two steps
                         piece.isFirstMove = false
                         move(piece, from, to)
                         isMoved = true
                         inPassingPiece = piece
                     }
-                }
-
-                // Pawn capturing or en passant
-                if (destination != null && destination.color != piece.color) {
+                } else if ((getPieceAt(to) != null && getPieceAt(to)?.color != piece.color) || inPassingPiece != null) {  // capture
                     val xStep = from.x - to.x
                     val yStep = from.y - to.y
-                    if (abs(xStep) == 1 && abs(yStep) == 1) {
-                        move(piece, from, to)
-                        isMoved = true
-                    }
-                }
 
-                // Pawn promotion
-                if (isMoved && to.x == endRow) {
-                    promotedPosition = to
-                    isPiecePromoted = true
+                    if (piece.color == PieceColor.WHITE) {
+                        if (xStep == 1 && yStep == 1) {  // left up
+                            if (getPieceAt(to) != null) {  // capture
+                                piece.isFirstMove = false
+                                move(piece, from, to)
+                                isMoved = true
+                            } else if (inPassingPiece != null) {  // en passant capture
+                                val xPass = from.x
+                                val yPass = from.y - 1
+                                val tempPass = getPieceAt(Position(xPass, yPass))
+                                if (tempPass == inPassingPiece) {
+                                    move(piece, from, to)
+                                    isMoved = true
+                                    tempPass?.let { whiteCapture = whiteCapture + it }
+                                    pieces[xPass][yPass] = null
+                                    inPassingPiece = null
+                                }
+                            }
+                        } else if (xStep == 1 && yStep == -1) {  // right up
+                            if (getPieceAt(to) != null) {  // capture
+                                piece.isFirstMove = false
+                                move(piece, from, to)
+                                isMoved = true
+                            } else if (inPassingPiece != null) {  // en passant capture
+                                val xPass = from.x
+                                val yPass = from.y + 1
+                                val tempPass = getPieceAt(Position(xPass, yPass))
+                                if (tempPass == inPassingPiece) {
+                                    move(piece, from, to)
+                                    isMoved = true
+                                    tempPass?.let { whiteCapture = whiteCapture + it }
+                                    pieces[xPass][yPass] = null
+                                    inPassingPiece = null
+                                }
+                            }
+                        }
+                    } else {  // black piece
+                        if (xStep == -1 && yStep == 1) {  // left down
+                            if (getPieceAt(to) != null) {  // capture
+                                piece.isFirstMove = false
+                                move(piece, from, to)
+                                isMoved = true
+                            } else if (inPassingPiece != null) {  // en passant capture
+                                val xPass = from.x
+                                val yPass = from.y - 1
+                                val tempPass = getPieceAt(Position(xPass, yPass))
+                                if (tempPass == inPassingPiece) {
+                                    move(piece, from, to)
+                                    isMoved = true
+                                    tempPass?.let { whiteCapture = whiteCapture + it }
+                                    pieces[xPass][yPass] = null
+                                    inPassingPiece = null
+                                }
+                            }
+                        } else if (xStep == -1 && yStep == -1) {  // right down
+                            if (getPieceAt(to) != null) {  // capture
+                                piece.isFirstMove = false
+                                move(piece, from, to)
+                                isMoved = true
+                            } else if (inPassingPiece != null) {  // en passant capture
+                                val xPass = from.x
+                                val yPass = from.y + 1
+                                val tempPass = getPieceAt(Position(xPass, yPass))
+                                if (tempPass == inPassingPiece) {
+                                    move(piece, from, to)
+                                    isMoved = true
+                                    tempPass?.let { whiteCapture = whiteCapture + it }
+                                    pieces[xPass][yPass] = null
+                                    inPassingPiece = null
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -182,11 +241,66 @@ class Board {
             }
 
             PieceType.KING -> {
-                val xStep = abs(from.x - to.x)
-                val yStep = abs(from.y - to.y)
-                if ((xStep == 1 && yStep == 0) || (xStep == 0 && yStep == 1) || (xStep == 1 && yStep == 1)) {
-                    move(piece, from, to)
-                    isMoved = true
+                if (getPieceAt(to) == null || getPieceAt(to)?.color != piece.color) { // move or capture
+                    val xStep = abs(from.x - to.x)
+                    val yStep = abs(from.y - to.y)
+                    if (xStep == 1 && yStep == 1 || xStep == 0 && yStep == 1 || xStep == 1 && yStep == 0) {
+                        move(piece, from, to)
+                        isMoved = true
+                    }
+                } else if (getPieceAt(to)?.type == PieceType.ROOK) {
+                    val xStep = from.x - to.x
+                    val yStep = from.y - to.y
+                    var canMove = true
+                    var count: Int
+
+                    if (xStep == 0 && yStep > 0) { // left
+                        count = from.y - 1
+                        while (count > to.y) {
+                            if (getPieceAt(Position(from.x, count)) != null) {
+                                canMove = false
+                            }
+                            count -= 1
+                        }
+                        if (canMove) {
+                            if (piece.color == PieceColor.WHITE) {
+                                getPieceAt(to)?.let {
+                                    move(piece, from, Position(from.x, from.y - 2))
+                                    move(it, to, Position(to.x, to.y + 3))
+                                    isMoved = true
+                                }
+                            } else {
+                                getPieceAt(to)?.let {
+                                    move(piece, from, Position(from.x, from.y - 2))
+                                    move(it, to, Position(to.x, to.y + 3))
+                                    isMoved = true
+                                }
+                            }
+                        }
+                    } else if (xStep == 0 && yStep < 0) { // right
+                        count = from.y + 1
+                        while (count < to.y) {
+                            if (getPieceAt(Position(from.x, count)) != null) {
+                                canMove = false
+                            }
+                            count += 1
+                        }
+                        if (canMove) {
+                            if (piece.color == PieceColor.WHITE) {
+                                getPieceAt(to)?.let {
+                                    move(piece, from, Position(from.x, from.y + 2))
+                                    move(it, to, Position(to.x, to.y - 2))
+                                    isMoved = true
+                                }
+                            } else {
+                                getPieceAt(to)?.let {
+                                    move(piece, from, Position(from.x, from.y + 2))
+                                    move(it, to, Position(to.x, to.y - 2))
+                                    isMoved = true
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
