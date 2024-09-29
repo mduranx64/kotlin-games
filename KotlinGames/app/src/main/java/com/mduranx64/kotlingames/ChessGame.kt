@@ -543,8 +543,9 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
 
     // Alerts (for example, when the game is won or a pawn promotion)
     if (showWinAlert) {
+        val color = if (viewModel.board.isWhiteKingCaptured) PieceColor.WHITE else PieceColor.BLACK
         WinAlert(
-            board = viewModel.board,
+            capturedColor = color,
             onDismiss = {
                 showWinAlert = false
                 navController.popBackStack()
@@ -558,43 +559,6 @@ fun ChessBoardView(navController: NavHostController, viewModel: ChessViewModel =
             board = viewModel.board
         )
     }
-}
-
-@Composable
-fun WinAlert(board: Board, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = { },
-        title = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Add image of the winning king (either black or white)
-                val imageResId = if (board.isWhiteKingCaptured) R.drawable.b_king else R.drawable.w_king
-                Image(
-                    painter = painterResource(id = imageResId),
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),  // Size of the image
-                    contentScale = ContentScale.Fit
-                )
-                Spacer(modifier = Modifier.height(16.dp)) // Add some spacing between image and text
-                // Show the winning message
-                Text(
-                    text = if (board.isWhiteKingCaptured) "Black wins!" else "White wins!",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                Text("Accept")
-            }
-        }
-    )
 }
 
 @Composable
@@ -799,22 +763,6 @@ fun DefaultPreviewDark() {
     KotlinGamesTheme(darkTheme = true) {
         val navController = rememberNavController()
         ChessGame(navController)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewWinAlertLight() {
-    KotlinGamesTheme {
-        WinAlert(onDismiss = { }, board = Board())
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewWinAlertDark() {
-    KotlinGamesTheme(darkTheme = true) {
-        WinAlert(onDismiss = { }, board = Board())
     }
 }
 
