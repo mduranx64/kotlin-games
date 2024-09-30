@@ -1,14 +1,3 @@
-import java.io.FileInputStream
-import java.util.Properties
-
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(FileInputStream(localPropertiesFile))
-}
-
-val applicationId = localProperties.getProperty("app.id") ?: ""
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -19,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = applicationId
+        applicationId = project.findProperty("app.id") as String?
         minSdk = 28
         targetSdk = 35
         versionCode = 7
@@ -28,6 +17,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+            storeFile = System.getenv("KEYSTORE")?.let { file (it) }
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
         }
     }
 
