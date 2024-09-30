@@ -37,14 +37,15 @@ platform :android do
   end
 
   desc "Build and deploy to Google Play"
-  lane :deploy_to_playstore do
+  lane :deploy_to_playstore do |options|
     gradle(task: "bundle", build_type: "Release")
 
     upload_to_play_store(
       track: "internal",
       json_key: options[:json_key],
       package_name: "com.mduranx64.kotlingames",
-      aab: "app/release/app-release.aab"
+      aab: "app/release/app-release.aab",
+      skip_upload_apk: true
     )
   end
 
