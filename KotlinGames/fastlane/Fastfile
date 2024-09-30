@@ -42,7 +42,7 @@ platform :android do
 
     upload_to_play_store(
       track: "internal",
-      json_key: ENV["GOOGLE_PLAY_JSON_KEY"],
+      json_key: options[:json_key],
       package_name: "com.mduranx64.kotlingames",
       aab: "app/release/app-release.aab"
     )

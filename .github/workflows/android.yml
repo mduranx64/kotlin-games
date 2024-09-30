@@ -1,0 +1,54 @@
+name: Android CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Install Ruby 3.x
+      - name: Set up Ruby 3.3.5
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.5
+
+      # Install Fastlane dependencies
+      - name: Install Fastlane
+        run: |
+          gem install bundler
+          gem install fastlane
+
+      # Set up JDK 11 for Android build
+      - name: Set up JDK 17
+        uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+
+      # Decrypt keystore file
+      - name: Decrypt keystore file
+        run: echo "${{ secrets.KEYSTORE }}" | base64 --decode > /home/runner/my-release-key.jks
+
+      # Build the release APK
+      - name: Build Release APK
+        working-directory: ./KotlinGames
+        run: ./gradlew assembleRelease
+        env:
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE: /home/runner/my-release-key.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+
+      # Decode and save the service account JSON file for Google Play API
+      - name: Create service account json
+        run: echo "${{ secrets.GOOGLE_PLAY_JSON_KEY }}" | base64 --decode > /home/runner/work/kotlin-games/kotlin-games/kotlin-games.json
+
+      # Deploy to Google Play Store using Fastlane
+      - name: Deploy to Play Store
+        working-directory: ./KotlinGames
+        run: fastlane upload_to_play_store json_key:/home/runner/work/kotlin-games/kotlin-games/kotlin-games.json
